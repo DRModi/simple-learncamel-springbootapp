@@ -1,0 +1,135 @@
+spring:
+  profiles:
+    active: dev
+
+#camel.springboot.shutdownTimeout: 2
+
+camel:
+  springboot:
+    shutdownTimeout: 2
+    health.indicator.enable: true
+
+management:
+  security:
+    enabled: false
+---
+
+spring:
+  profiles: mock
+  mail:
+      host: smtp.gmail.com
+      port: 587
+      username: <<GMAIL Account User Name>>
+      password: <<Add Password>>
+      properties.mail.smtp.auth: true
+      properties.mail.smtp.starttls.enable: true
+
+mailTo: <<Provide Gmail Address from alert email Should be sent>>
+mailFrom: <<Provide Gmail Address where alert email sholud be received>>
+
+
+
+startRoute: direct:inputDirect
+#Need to keep it since it was refer into the route, so runtime Camel Expect this value to be presented in profile
+fromRoute: file:data/dev/input?delete=true&readLock=none&moveFailed=error
+toRoute1: mock:outputMock
+tojdbcRoute: mock:outputMock1
+toSuccessRoute: mock:outputMock2
+healthCheckRoute: direct:healthCheck
+
+
+message: Mock Environment!!
+
+---
+
+spring:
+  profiles: dev
+  datasourceConnInfo:
+    driver-class-name: org.postgresql.Driver
+            #Updated localdb to localdbDeleteMe to generate the exception to validate the health route.
+            #url: jdbc:postgresql://localhost:5432/localdbDeleteMe
+    url: jdbc:postgresql://localhost:5432/localdb
+    username: postgres
+    password: postgres
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: <<GMAIL Account User Name>>
+    password: <<Add Password>>
+    properties.mail.smtp.auth: true
+    properties.mail.smtp.starttls.enable: true
+
+mailTo: <<Provide Gmail Address from alert email Should be sent>>
+mailFrom: <<Provide Gmail Address where alert email sholud be received>>
+
+
+
+startRoute: timer:filePollTimer?period=10s
+fromRoute: file:data/dev/input?delete=true&readLock=none&moveFailed=error
+toRoute1: file:data/dev/output
+tojdbcRoute: jdbc:myDataSource
+toSuccessRoute: file:data/dev/output?fileName=SuccessMessage.txt
+healthCheckRoute: timer:healthCheckTimer?period=15s
+
+message: DEV Environment!!
+
+---
+
+spring:
+  profiles: stage
+  datasourceConnInfo:
+      driver-class-name: org.postgresql.Driver
+      url: jdbc:postgresql://localhost:5432/localdb
+      username: postgres
+      password: postgres
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: <<GMAIL Account User Name>>
+    password: <<Add Password>>
+    properties.mail.smtp.auth: true
+    properties.mail.smtp.starttls.enable: true
+
+mailTo: <<Provide Gmail Address from alert email Should be sent>>
+mailFrom: <<Provide Gmail Address where alert email sholud be received>>
+
+
+startRoute: timer:filePollTimer?period=10s
+fromRoute: file:data/stage/input?delete=true&readLock=none&moveFailed=error
+toRoute1: file:data/stage/output
+tojdbcRoute: jdbc:myDataSource
+toSuccessRoute: file:data/dev/output?fileName=SuccessMessage.txt
+healthCheckRoute: timer:healthCheckTimer?period=15s
+
+message: Stage Environment!!
+
+---
+
+spring:
+  profiles: prod
+  datasourceConnInfo:
+      driver-class-name: org.postgresql.Driver
+      url: jdbc:postgresql://localhost:5432/localdb
+      username: postgres
+      password: postgres
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: <<GMAIL Account User Name>>
+    password: <<Add Password>>
+    properties.mail.smtp.auth: true
+    properties.mail.smtp.starttls.enable: true
+
+mailTo: <<Provide Gmail Address from alert email Should be sent>>
+mailFrom: <<Provide Gmail Address where alert email sholud be received>>
+
+startRoute: timer:filePollTimer?period=10s
+fromRoute: file:data/prod/input?delete=true&readLock=none&moveFailed=error
+toRoute1: file:data/prod/output
+tojdbcRoute: jdbc:myDataSource
+toSuccessRoute: file:data/prod/output?fileName=SuccessMessage.txt
+healthCheckRoute: timer:healthCheckTimer?period=15s
+
+
+message: Production Environment!!
+---

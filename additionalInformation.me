@@ -1,0 +1,214 @@
+Use org.springframework.core.env.Environment
+********************************************
+To access the choosen profile key-value pair, in this case message.
+
+
+
+Camel IntelliJ plugin
+***********************
+IntelliJ -> Preferences -> Plugins -> Search Camel -> Browse repository -> Install Apache Camel IDEA Plugin.
+After install Restart IntelliJ
+
+- this will enable construct routes directly on application.yml
+
+
+Inflight Message Info Statements:
+*********************************
+This is due to Camel wants to shutdown all route gracefully and default timeout is 300 seconds. As appear in below logs
+So this will take 300 seconds to stop this process automatically. we are overriding default message but recommandations
+is to keep the default value.
+
+- Basically what it does is as soon as you kill the running instance, default shutdown strategy kicks in and camel run for default
+300 second before completely kill the java process.
+
+In order to override the value add below property application property/yml file:
+--------------------------------------------------------------------------------
+camel.springboot.shutdownTimeout: 2
+
+- it will override default value 300 to 2.
+
+
+
+
+Default Shutdown Strategy Logs:
+--------------------------------
+2018-08-26 12:34:37.304  INFO 17118 --- [      Thread-10] o.a.camel.impl.DefaultShutdownStrategy   : Starting to graceful shutdown 1 routes (timeout 300 seconds)
+
+2018-08-26 12:34:37.306  INFO 17118 --- [ - ShutdownTask] o.a.camel.impl.DefaultShutdownStrategy   : Waiting as there are still 1 inflight and pending exchanges to complete, timeout in 300 seconds. Inflights per route: [route1 = 1]
+2018-08-26 12:34:37.308  INFO 17118 --- [ - ShutdownTask] o.a.camel.impl.DefaultShutdownStrategy   : There are 1 inflight exchanges:
+	InflightExchange: [exchangeId=ID-Dixitkumars-iMac-local-1535301241777-0-7, fromRouteId=route1, routeId=route1, nodeId=pollEnrich1, elapsed=0, duration=3682]
+2018-08-26 12:34:38.312  INFO 17118 --- [ - ShutdownTask] o.a.camel.impl.DefaultShutdownStrategy   : Waiting as there are still 1 inflight and pending exchanges to complete, timeout in 299 seconds. Inflights per route: [route1 = 1]
+2018-08-26 12:34:38.313  INFO 17118 --- [ - ShutdownTask] o.a.camel.impl.DefaultShutdownStrategy   : There are 1 inflight exchanges:
+	InflightExchange: [exchangeId=ID-Dixitkumars-iMac-local-1535301241777-0-7, fromRouteId=route1, routeId=route1, nodeId=pollEnrich1, elapsed=0, duration=4687]
+2018-08-26 12:34:39.313  INFO 17118 --- [ - ShutdownTask] o.a.camel.impl.DefaultShutdownStrategy   : Waiting as there are still 1 inflight and pending exchanges to complete, timeout in 298 seconds. Inflights per route: [route1 = 1]
+2018-08-26 12:34:39.313  INFO 17118 --- [ - ShutdownTask] o.a.camel.impl.DefaultShutdownStrategy   : There are 1 inflight exchanges:
+
+
+
+
+
+After overriding Shutdown Strategy to 2 second Logs:
+-------------------------------------------------------
+2018-08-26 12:49:15.506  INFO 18544 --- [      Thread-10] o.a.camel.spring.SpringCamelContext      : Apache Camel 2.22.0 (CamelContext: camel-1) is shutting down
+2018-08-26 12:49:15.507  INFO 18544 --- [      Thread-10] o.a.camel.impl.DefaultShutdownStrategy   : Starting to graceful shutdown 1 routes (timeout 2 seconds)
+2018-08-26 12:49:15.509  INFO 18544 --- [ - ShutdownTask] o.a.camel.impl.DefaultShutdownStrategy   : Waiting as there are still 1 inflight and pending exchanges to complete, timeout in 2 seconds. Inflights per route: [route1 = 1]
+2018-08-26 12:49:15.510  INFO 18544 --- [ - ShutdownTask] o.a.camel.impl.DefaultShutdownStrategy   : There are 1 inflight exchanges:
+	InflightExchange: [exchangeId=ID-Dixitkumars-iMac-local-1535302139766-0-3, fromRouteId=route1, routeId=route1, nodeId=pollEnrich1, elapsed=0, duration=4073]
+2018-08-26 12:49:16.513  INFO 18544 --- [ - ShutdownTask] o.a.camel.impl.DefaultShutdownStrategy   : Waiting as there are still 1 inflight and pending exchanges to complete, timeout in 1 seconds. Inflights per route: [route1 = 1]
+2018-08-26 12:49:16.513  INFO 18544 --- [ - ShutdownTask] o.a.camel.impl.DefaultShutdownStrategy   : There are 1 inflight exchanges:
+	InflightExchange: [exchangeId=ID-Dixitkumars-iMac-local-1535302139766-0-3, fromRouteId=route1, routeId=route1, nodeId=pollEnrich1, elapsed=0, duration=5076]
+2018-08-26 12:49:17.511  WARN 18544 --- [      Thread-10] o.a.camel.impl.DefaultShutdownStrategy   : Timeout occurred during graceful shutdown. Forcing the routes to be shutdown now. Notice: some resources may still be running as graceful shutdown did not complete successfully.
+2018-08-26 12:49:17.511  WARN 18544 --- [ - ShutdownTask] o.a.camel.impl.DefaultShutdownStrategy   : Interrupted while waiting during graceful shutdown, will force shutdown now.
+2018-08-26 12:49:17.511  INFO 18544 --- [      Thread-10] o.a.camel.impl.DefaultShutdownStrategy   : There are 1 inflight exchanges:
+	InflightExchange: [exchangeId=ID-Dixitkumars-iMac-local-1535302139766-0-3, fromRouteId=route1, routeId=route1, nodeId=pollEnrich1, elapsed=0, duration=6074]
+2018-08-26 12:49:17.511  INFO 18544 --- [      Thread-10] o.a.camel.impl.DefaultShutdownStrategy   : Graceful shutdown of 1 routes completed in 2 seconds
+2018-08-26 12:49:17.513  INFO 18544 --- [ - ShutdownTask] o.a.camel.impl.DefaultShutdownStrategy   : Route: route1 shutdown complete, was consuming from: timer://filePollTimer?period=10s
+2018-08-26 12:49:17.514  WARN 18544 --- [      Thread-10] o.a.c.impl.DefaultInflightRepository     : Shutting down while there are still 1 inflight exchanges.
+2018-08-26 12:49:17.516  INFO 18544 --- [      Thread-10] o.a.camel.spring.SpringCamelContext      : Apache Camel 2.22.0 (CamelContext: camel-1) uptime 17.272 seconds
+2018-08-26 12:49:17.516  INFO 18544 --- [      Thread-10] o.a.camel.spring.SpringCamelContext      : Apache Camel 2.22.0 (CamelContext: camel-1) is shutdown in 2.010 seconds
+2018-08-26 12:49:17.517  INFO 18544 --- [      Thread-10] o.s.j.e.a.AnnotationMBeanExporter        : Unregistering JMX-exposed beans on shutdown
+
+
+
+
+Running Using Profile:
+**********************
+java -jar -Dspring.profiles.active=stage target/<<App Jar>>
+
+
+Use commons-io dependency to do cleanup work during testing:
+************************************************************
+add below dependency
+
+    		<dependency>
+    			<groupId>org.apache.commons</groupId>
+    			<artifactId>commons-io</artifactId>
+    			<version>1.3.2</version>
+    		</dependency>
+
+
+Setup Logback:
+**************
+Part of Spring initializer project, logback classic and core libraries are available in project
+- create logback.xml file to setup
+- create appender
+    1. for console output
+    2. for log rollover configuration
+
+
+setup Lombok:
+**************
+
+    Class with lombok:
+    ------------------
+        @Slf4j
+        public class className{
+        }
+
+    Class without lombok:
+    ---------------------
+            public class className{
+                Logger logger = Logger.getLogger(className.class);
+            }
+
+- Add below dependency
+		<!-- Including Lombok dependency -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.16.20</version>
+			<scope>provided</scope>
+		</dependency>
+
+- Add Lombok plugin in IntelliJ
+- Enable Annotation
+
+
+
+Add Camel-Bindy and Camel-CSV dependencies
+*******************************************
+Unmarshal the upstream csv file to Java object and store the value into DB.
+
+
+        		<dependency>
+        			<groupId>org.apache.camel</groupId>
+        			<artifactId>camel-bindy</artifactId>
+        			<version>2.20.1</version>
+        			<scope>compile</scope>
+        		</dependency>
+
+        		<dependency>
+        			<groupId>org.apache.camel</groupId>
+        			<artifactId>camel-csv</artifactId>
+        			<version>2.20.1</version>
+        			<scope>compile</scope>
+        		</dependency>
+
+- Unmashal using bindy - BindyCsvDataFormat with domain class
+- It will unmarshal input file into Java object list
+
+
+
+
+Use Split EIP pattern to split individual record into individual object:
+**************************************************************************
+    .split(body())
+        .log("##### Individual Record is ${body}")
+    .end()
+
+
+
+DB setup:
+**************
+- Create table in postgres DB
+- Add dependencies in pom.xml (springboot starter jdbc, camel-jdbc, postgres)
+- Add datasource connection details in Application.yml
+- Create Datasource Bean class
+- Go to DB navigator, use Application SQL and create Table.
+
+
+Exception Handling:
+*******************
+- Using camel core exception mechanism
+- First : threw error using RuntimeException class - In this case camel flow stops due to error
+- Second : Using errorHandler(deadLetterChannel) - In this case camel flow will be continue.
+- Third: in errorHandler after introducing other retry properties - In this case camel flow stops due to error
+     errorHandler(deadLetterChannel("log:errorInRoute?level=ERROR&showProperties=true")
+                                                .maximumRedeliveries(3)
+                                                .redeliveryDelay(3000)
+                                                .backOffMultiplier(2)
+                                                .retryAttemptedLogLevel(LoggingLevel.ERROR));
+
+- OnException: It gives you flexibility to catch/tackle different type of exception different way. (personal favourite)
+    - Custom created DataException - which is being threw from the buildSQLProcessor class upon SKU is null (retry doesn't make sense, since it is data issue)
+    - OnPSQLException: this is due to DB Error, could be server down or not able to connect DB (having retry make sense)
+
+- We can use errorHandler(deadLetterChannel) and OnException together, it will route message to the both defined node on the errorHandler and OnException, but it wont perform the retry settings
+  which are defined on deadLetterChannel, but it will perform on onException.
+
+Move failed file in Error Directory:
+************************************
+1) - Add desire path as another node at the end of the exception definition
+2) - Add the moveFailed at From route - &moveFailed=error
+
+
+Add Email Support to Alert:
+************************************
+1) Add dependency to pom.xml for spring-starter-mail
+2) Define mail configuration at application.yml
+3) Create MailProcessor and used that to send an email
+4) Add process node at the OnDataException to send email alert for failure.
+
+
+Note: by defining Route ID camel prints that route id in logs instead of printing default route id's.
+
+Health Check
+*************
+1) Add spring-starter-actuator
+2) Add camel-http
+3) Create new HealthCheck route
+4) Integrate the mail processor to alert in case of any component down in healthcheck route - updated db name to generate the error in DB component
+5) Create Mock test to validate
+
+Note: define @Ignore to ignore test case which we dont want to run.
+
